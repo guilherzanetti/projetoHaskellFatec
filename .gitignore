@@ -1,0 +1,8 @@
+dist-newstyle/
+.ruff_cache/
+client/node_modules/
+client/dist/
+*.hi
+*.o
+.env
+wallets.json

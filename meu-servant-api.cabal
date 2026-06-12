@@ -1,0 +1,47 @@
+cabal-version:      3.0
+name:               meu-servant-api
+version:            0.1.0.0
+author:             Guilherme
+maintainer:         zanettig520@gmail.com
+license:            NONE
+build-type:         Simple
+extra-doc-files:    CHANGELOG.md
+
+common warnings
+    ghc-options: -Wall
+
+executable meu-servant-api
+    import:           warnings
+    main-is:          Main.hs
+    other-modules:
+        WalletTypes
+        WalletStore
+        JsonStore
+        WalletService
+        Handlers
+    hs-source-dirs:   app
+    build-depends:
+        base          >=4.16 && <5,
+        servant,
+        servant-server,
+        warp,
+        aeson,
+        text,
+        bytestring,
+        wai-app-static,
+        http-media,
+        file-embed,
+        uuid,
+        http-conduit,
+        time,
+        process,
+        directory,
+        stm,
+        containers
+    default-language: GHC2021
+    default-extensions:
+        DataKinds
+        TypeOperators
+        OverloadedStrings
+        DeriveGeneric
+        DeriveAnyClass
