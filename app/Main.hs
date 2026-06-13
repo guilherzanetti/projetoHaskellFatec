@@ -4,8 +4,8 @@ import Servant
 import Network.Wai.Handler.Warp (run)
 import Data.Aeson (ToJSON)
 import GHC.Generics (Generic)
-
-import JsonStore  (newJsonStore)
+import System.Environment (getEnv)
+import DatabaseStore (newDatabaseStore)
 import Handlers   (WalletAPI, Config (..), walletServer)
 
 -- ---------------------------------------------------------------------------
@@ -55,7 +55,8 @@ main :: IO ()
 main = do
   -- V1: JSON-file storage.
   -- To migrate to PostgreSQL in V2: replace newJsonStore with newDatabaseStore connStr.
-  store <- newJsonStore "wallets.json"
+  connStr <- getEnv "DATABASE_URL"
+  store   <- newDatabaseStore connStr
 
   let cfg = Config
         { cfgGenerateScript = "scripts/generate_wallet.py"

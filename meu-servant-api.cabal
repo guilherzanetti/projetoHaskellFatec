@@ -19,6 +19,7 @@ executable meu-servant-api
         JsonStore
         WalletService
         Handlers
+        DatabaseStore
     hs-source-dirs:   app
     build-depends:
         base          >=4.16 && <5,
@@ -37,7 +38,9 @@ executable meu-servant-api
         process,
         directory,
         stm,
-        containers
+        containers,
+        postgresql-simple,
+        resource-pool
     default-language: GHC2021
     default-extensions:
         DataKinds
