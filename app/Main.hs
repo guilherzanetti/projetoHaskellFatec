@@ -63,12 +63,12 @@ main :: IO ()
 main = do
   mode <- lookupEnv "STORAGE_MODE"
   store <- case mode of
-    Just "local" -> do
-      let dbPath = "local_data.db"
-      LocalStore.newLocalStore dbPath
-    _ -> do
+    Just "database" -> do
       connStr <- getEnv "DATABASE_URL"
       DatabaseStore.newDatabaseStore connStr
+    _ -> do
+      let dbPath = "local_data.db"
+      LocalStore.newLocalStore dbPath
 
   let cfg = Config
         { cfgGenerateScript = "scripts/generate_wallet.py"
