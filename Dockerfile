@@ -11,6 +11,9 @@ RUN npm install
 COPY client/ ./
 RUN npm run build
 
+# Verifica se o build gerou os arquivos
+RUN ls -la /app/client/dist/
+
 # ============================================================
 # Estágio 2: Build do Backend (Haskell + Cabal)
 # ============================================================
@@ -52,8 +55,11 @@ COPY scripts/ ./scripts/
 COPY requirements.txt ./
 RUN pip3 install -r requirements.txt --break-system-packages
 
-# Frontend buildado vai para a pasta "dist" onde o Main.hs espera
+# Frontend buildado vai para a pasta "dist"
 COPY --from=frontend-builder /app/client/dist ./dist
+
+# Verifica se o dist chegou na imagem final
+RUN ls -la /app/dist/
 
 EXPOSE 8080
 
