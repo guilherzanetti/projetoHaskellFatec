@@ -9,3 +9,4 @@ wallets.json
 local_data.db
 docs/
 test_data.db
+dist/
