@@ -6,3 +6,5 @@ client/dist/
 *.o
 .env
 wallets.json
+local_data.db
+docs/

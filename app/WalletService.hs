@@ -1,5 +1,3 @@
--- | WalletService: all business logic — wallet generation, import, balance,
---   transaction history, fee estimation, and sending Bitcoin.
 module WalletService
   ( generateWallet
   , importWallet
@@ -7,6 +5,8 @@ module WalletService
   , fetchTransactions
   , fetchFeeEstimate
   , sendBitcoin
+  , fetchPrice
+  , fetchConsolidatedBalance
   ) where
 
 import WalletTypes
@@ -21,25 +21,13 @@ import System.Process (readProcess)
 import Network.HTTP.Simple (parseRequest, httpLBS, getResponseBody, Response)
 import Control.Exception (try, SomeException)
 
--- ---------------------------------------------------------------------------
--- Wallet generation (new wallet)
--- ---------------------------------------------------------------------------
-
 generateWallet :: FilePath -> IO (Either String GeneratedWallet)
 generateWallet scriptPath = runGeneratorScript scriptPath ""
-
--- ---------------------------------------------------------------------------
--- Wallet import (from existing BIP39 mnemonic)
--- ---------------------------------------------------------------------------
 
 importWallet :: FilePath -> Text -> IO (Either String GeneratedWallet)
 importWallet scriptPath mnemonic =
   runGeneratorScript scriptPath . LBSC.unpack . encode $
     object ["mnemonic" .= mnemonic]
-
--- ---------------------------------------------------------------------------
--- Balance (Blockstream Esplora)
--- ---------------------------------------------------------------------------
 
 fetchBalance :: Text -> IO (Either String BalanceResponse)
 fetchBalance address = do
@@ -55,10 +43,6 @@ fetchBalance address = do
               toBtc  = (/ 1.0e8) . fromIntegral
           in  pure . Right $ BalanceResponse address conf unconf (toBtc conf) (toBtc unconf)
 
--- ---------------------------------------------------------------------------
--- Transaction history (raw Blockstream JSON proxied to frontend)
--- ---------------------------------------------------------------------------
-
 fetchTransactions :: Text -> IO (Either String Value)
 fetchTransactions address = do
   body <- httpGet $ "https://blockstream.info/api/address/" <> T.unpack address <> "/txs"
@@ -68,10 +52,6 @@ fetchTransactions address = do
       case eitherDecode body' of
         Left  err -> pure . Left $ "Transactions parse error: " <> err
         Right v   -> pure (Right v)
-
--- ---------------------------------------------------------------------------
--- Fee estimate (sat/vbyte for fast/normal/slow targets)
--- ---------------------------------------------------------------------------
 
 fetchFeeEstimate :: IO (Either String FeeEstimate)
 fetchFeeEstimate = do
@@ -85,18 +65,14 @@ fetchFeeEstimate = do
           let get k = fromMaybe 10.0 (Map.lookup k m)
           in  pure . Right $ FeeEstimate (get "1") (get "6") (get "144")
 
--- ---------------------------------------------------------------------------
--- Send Bitcoin (Python script handles UTXO selection, signing, broadcast)
--- ---------------------------------------------------------------------------
-
 sendBitcoin
-  :: FilePath  -- path to send_transaction.py
-  -> Text      -- sender private key (hex)
-  -> Text      -- sender address (to look up UTXOs)
-  -> Text      -- recipient address
-  -> Double    -- amount in BTC
-  -> Int       -- fee rate sat/vbyte
-  -> IO (Either String Text)   -- Right txHash | Left errorMessage
+  :: FilePath
+  -> Text
+  -> Text
+  -> Text
+  -> Double
+  -> Int
+  -> IO (Either String Text)
 sendBitcoin scriptPath pk senderAddr recipient amtBtc feeRate = do
   let inputJson = LBSC.unpack . encode $ object
         [ "privateKey"      .= pk
@@ -117,11 +93,33 @@ sendBitcoin scriptPath pk senderAddr recipient amtBtc feeRate = do
             (_, Just e) -> pure (Left (T.unpack e))
             _           -> pure . Left $ "Unexpected script output: " <> output
 
--- ---------------------------------------------------------------------------
--- Internal helpers
--- ---------------------------------------------------------------------------
+fetchPrice :: IO (Either String Double)
+fetchPrice = do
+  body <- httpGet "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=brl"
+  case body of
+    Left err  -> pure (Left err)
+    Right body' ->
+      case eitherDecode body' :: Either String (Map.Map T.Text (Map.Map T.Text Double)) of
+        Left err -> pure . Left $ "Price parse error: " <> err
+        Right m  -> case Map.lookup "bitcoin" m >>= Map.lookup "brl" of
+          Nothing  -> pure . Left $ "Price not found"
+          Just price -> pure (Right price)
 
--- | Run a Python wallet-generator script with optional stdin, parse GeneratedWallet.
+fetchConsolidatedBalance :: (Text -> IO (Either String BalanceResponse)) -> [Text] -> IO (Either String ConsolidatedBalance)
+fetchConsolidatedBalance getBal addresses = do
+  results <- mapM getBal addresses
+  let errs  = [e | Left e <- results]
+      bals  = [b | Right b <- results]
+  if not (null errs)
+    then pure . Left $ T.unpack (T.intercalate "; " (map T.pack errs))
+    else do
+      let totalBtc = sum (map brConfirmedBtc bals)
+      priceResult <- fetchPrice
+      let totalBrl = case priceResult of
+            Right p  -> totalBtc * p
+            Left _   -> 0.0
+      pure . Right $ ConsolidatedBalance totalBtc totalBrl (length bals)
+
 runGeneratorScript :: FilePath -> String -> IO (Either String GeneratedWallet)
 runGeneratorScript scriptPath stdin_ = do
   result <- try (readProcess "python" [scriptPath] stdin_) :: IO (Either SomeException String)
@@ -132,7 +130,6 @@ runGeneratorScript scriptPath stdin_ = do
         Left  err -> pure . Left $ "Parse error: " <> err <> "\nOutput: " <> output
         Right gw  -> pure (Right gw)
 
--- | Perform an HTTP GET and return the response body or an error string.
 httpGet :: String -> IO (Either String LBS.ByteString)
 httpGet url = do
   result <- try (parseRequest url >>= httpLBS) :: IO (Either SomeException (Response LBS.ByteString))

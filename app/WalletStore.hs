@@ -1,19 +1,29 @@
--- | WalletStore: repository abstraction via record-of-functions.
---
--- This is the ONLY file that needs to change between storage backends.
--- V1: JsonStore   — newJsonStore  "wallets.json"
--- V2: PostgresStore — newPostgresStore connectionString
---
--- Handlers and all other modules depend only on this type, never on a
--- concrete implementation.
-module WalletStore where
+module WalletStore
+  ( AppStore(..)
+  ) where
 
-import WalletTypes (StoredWallet)
+import WalletTypes
+import UserTypes
 import Data.Text (Text)
 
-data WalletStore = WalletStore
-  { storeSave   :: StoredWallet -> IO ()
-  , storeList   :: IO [StoredWallet]
-  , storeFind   :: Text -> IO (Maybe StoredWallet)
-  , storeDelete :: Text -> IO Bool
+data AppStore = AppStore
+  { storeRegisterUser     :: User -> IO ()
+  , storeFindUserByEmail  :: Text -> IO (Maybe User)
+  , storeFindUserById     :: Text -> IO (Maybe User)
+  , storeUpdateUser       :: User -> IO ()
+  , storeSaveWallet       :: StoredWallet -> IO ()
+  , storeListWallets      :: Text -> IO [StoredWallet]
+  , storeFindWallet       :: Text -> IO (Maybe StoredWallet)
+  , storeDeleteWallet     :: Text -> IO Bool
+  , storeUpdateWalletTags :: Text -> [Text] -> IO Bool
+  , storeSaveContact      :: Contact -> IO ()
+  , storeListContacts     :: Text -> IO [Contact]
+  , storeDeleteContact    :: Text -> IO Bool
+  , storeSaveNote         :: TxNote -> IO ()
+  , storeListNotes        :: Text -> Text -> IO [TxNote]
+  , storeDeleteNote       :: Text -> IO Bool
+  , storeGetInternalBalance :: Text -> Text -> IO Integer
+  , storeUpdateInternalBalance :: Text -> Text -> Integer -> IO ()
+  , storeSaveTransfer     :: Text -> Text -> Text -> Integer -> IO ()
+  , storeListTransfers    :: Text -> IO [(Text, Text, Text, Integer, Text)]
   }

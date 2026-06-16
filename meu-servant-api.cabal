@@ -14,9 +14,11 @@ executable meu-servant-api
     import:           warnings
     main-is:          Main.hs
     other-modules:
+        Crypto
+        UserTypes
         WalletTypes
         WalletStore
-        JsonStore
+        LocalStore
         WalletService
         Handlers
         DatabaseStore
@@ -39,8 +41,44 @@ executable meu-servant-api
         directory,
         stm,
         containers,
-        postgresql-simple,
-        resource-pool
+        cryptonite,
+        memory,
+        base64-bytestring,
+        direct-sqlite,
+        random
+    default-language: GHC2021
+    default-extensions:
+        DataKinds
+        TypeOperators
+        OverloadedStrings
+        DeriveGeneric
+        DeriveAnyClass
+
+test-suite meu-servant-api-test
+    import:       warnings
+    type:         exitcode-stdio-1.0
+    main-is:      Spec.hs
+    other-modules:
+        CryptoSpec
+        P2PSpec
+    hs-source-dirs:   test, app
+    build-depends:
+        base          >=4.16 && <5,
+        hspec,
+        servant,
+        servant-server,
+        aeson,
+        text,
+        bytestring,
+        uuid,
+        time,
+        cryptonite,
+        memory,
+        base64-bytestring,
+        direct-sqlite,
+        random,
+        stm,
+        containers
     default-language: GHC2021
     default-extensions:
         DataKinds
