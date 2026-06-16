@@ -87,7 +87,7 @@ main = do
         }
       apiApp    = serve (Proxy :: Proxy FullAPI)
                     (coreServer :<|> walletServer store cfg)
-      staticApp_ = staticApp (defaultWebAppSettings "dist")
+      staticApp_ = staticApp (defaultWebAppSettings "/app/dist")
       app       = combinedApp apiApp staticApp_
 
   putStrLn "=================================================="
