@@ -13,6 +13,7 @@ common warnings
 executable meu-servant-api
     import:           warnings
     main-is:          Main.hs
+    ghc-options:      -Wall -threaded -rtsopts -with-rtsopts=-N
     other-modules:
         Crypto
         UserTypes
