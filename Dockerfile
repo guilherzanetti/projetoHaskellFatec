@@ -16,7 +16,6 @@ RUN npm run build
 # ============================================================
 FROM haskell:9.12.4 AS backend-builder
 
-# Dependências do sistema necessárias para postgresql-simple e direct-sqlite
 RUN apt-get update && apt-get install -y \
     libpq-dev \
     libsqlite3-dev \
@@ -25,15 +24,12 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Copia os arquivos de configuração primeiro (cache de dependências)
 COPY cabal.project meu-servant-api.cabal ./
 RUN cabal update && cabal build --only-dependencies -j4
 
-# Copia o restante do código e builda
 COPY app/ ./app/
 RUN cabal build -j4
 
-# Copia o binário para um local fixo
 RUN cp $(cabal list-bin meu-servant-api) /app/servidor
 
 # ============================================================
@@ -41,7 +37,6 @@ RUN cp $(cabal list-bin meu-servant-api) /app/servidor
 # ============================================================
 FROM debian:bookworm-slim
 
-# Dependências de runtime
 RUN apt-get update && apt-get install -y \
     libpq5 \
     libsqlite3-0 \
@@ -52,18 +47,13 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Copia o binário do backend
 COPY --from=backend-builder /app/servidor ./servidor
-
-# Copia os scripts Python
 COPY scripts/ ./scripts/
-
-# Copia o frontend buildado para dentro do servidor Haskell servir
-COPY --from=frontend-builder /app/client/dist ./dist-newstyle/dist
-
-# Instala dependências Python dos scripts
 COPY requirements.txt ./
 RUN pip3 install -r requirements.txt --break-system-packages
+
+# Frontend buildado vai para a pasta "dist" onde o Main.hs espera
+COPY --from=frontend-builder /app/client/dist ./dist
 
 EXPOSE 8080
 

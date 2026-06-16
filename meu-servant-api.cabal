@@ -35,6 +35,8 @@ executable meu-servant-api
         wai-app-static,
         http-media,
         file-embed,
+        wai,
+        wai-app-static,
         uuid,
         http-conduit,
         time,

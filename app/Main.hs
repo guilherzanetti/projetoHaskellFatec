@@ -2,6 +2,8 @@ module Main where
 
 import Servant
 import Network.Wai.Handler.Warp (run)
+import Network.Wai (Application, pathInfo)
+import Network.Wai.Application.Static (staticApp, defaultWebAppSettings)
 import Data.Aeson (ToJSON)
 import GHC.Generics (Generic)
 import System.Environment (getEnv, lookupEnv)
@@ -10,6 +12,7 @@ import qualified DatabaseStore (newDatabaseStore)
 import Handlers (AppAPI, Config(..), walletServer)
 import WalletStore (AppStore)
 import Data.Proxy (Proxy(..))
+import qualified Data.Text as T
 
 data PingResponse = PingResponse { message :: String, status :: String }
   deriving (Show, Generic, ToJSON)
@@ -59,6 +62,13 @@ coreServer = pingH :<|> infoH
 
 type FullAPI = CoreAPI :<|> AppAPI
 
+-- Combina a API Haskell com o servidor de arquivos estáticos do React
+combinedApp :: Application -> Application -> Application
+combinedApp apiApp staticApp_ req respond =
+  case pathInfo req of
+    ("api":_) -> apiApp req respond
+    _         -> staticApp_ req respond
+
 main :: IO ()
 main = do
   mode <- lookupEnv "STORAGE_MODE"
@@ -75,8 +85,10 @@ main = do
         , cfgImportScript   = "scripts/import_wallet.py"
         , cfgSendScript     = "scripts/send_transaction.py"
         }
-      app = serve (Proxy :: Proxy FullAPI)
-              (coreServer :<|> walletServer store cfg)
+      apiApp    = serve (Proxy :: Proxy FullAPI)
+                    (coreServer :<|> walletServer store cfg)
+      staticApp_ = staticApp (defaultWebAppSettings "dist")
+      app       = combinedApp apiApp staticApp_
 
   putStrLn "=================================================="
   putStrLn "  Haskell Bitcoin Wallet API  v3.0"
