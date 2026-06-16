@@ -9,17 +9,9 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.ByteString.Char8 as BS
 import Database.PostgreSQL.Simple
-import Database.PostgreSQL.Simple.FromRow
 import Data.Time.Clock (getCurrentTime)
 import Data.Time.Format (formatTime, defaultTimeLocale)
 
--- ---------------------------------------------------------------------------
--- Helpers
--- ---------------------------------------------------------------------------
-
-nullableText :: Maybe Text -> Action
-nullableText Nothing  = toField (Nothing :: Maybe Text)
-nullableText (Just t) = toField t
 
 -- ---------------------------------------------------------------------------
 -- Row parsers
