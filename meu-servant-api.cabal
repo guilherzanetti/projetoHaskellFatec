@@ -45,6 +45,7 @@ executable meu-servant-api
         memory,
         base64-bytestring,
         direct-sqlite,
+        postgresql-simple,
         random
     default-language: GHC2021
     default-extensions:
