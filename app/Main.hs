@@ -67,6 +67,7 @@ combinedApp :: Application -> Application -> Application
 combinedApp apiApp staticApp_ req respond =
   case pathInfo req of
     ("api":_) -> apiApp req respond
+    []        -> staticApp_ (req { pathInfo = ["index.html"] }) respond
     _         -> staticApp_ req respond
 
 main :: IO ()
