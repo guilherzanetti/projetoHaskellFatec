@@ -17,7 +17,7 @@ RUN ls -la /app/client/dist/
 # ============================================================
 # Estágio 2: Build do Backend (Haskell + Cabal)
 # ============================================================
-FROM haskell:9.6.7 AS backend-builder
+FROM haskell:9.6.7-slim-bookworm AS backend-builder
 
 RUN apt-get update && apt-get install -y \
     libpq-dev \
