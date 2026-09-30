@@ -17,9 +17,9 @@ RUN ls -la /app/client/dist/
 # ============================================================
 # Estágio 2: Build do Backend (Haskell + Cabal)
 # ============================================================
-FROM haskell:9.6.7-slim-bookworm AS backend-builder
+FROM haskell:9.6 AS backend-builder
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update --fix-missing && apt-get install -y \
     libpq-dev \
     libsqlite3-dev \
     pkg-config \
