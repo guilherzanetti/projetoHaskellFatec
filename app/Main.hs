@@ -13,6 +13,7 @@ import Handlers (AppAPI, Config(..), walletServer)
 import WalletStore (AppStore)
 import Data.Proxy (Proxy(..))
 import qualified Data.Text as T
+import Text.Read (readMaybe)
 
 data PingResponse = PingResponse { message :: String, status :: String }
   deriving (Show, Generic, ToJSON)
@@ -73,6 +74,8 @@ combinedApp apiApp staticApp_ req respond =
 main :: IO ()
 main = do
   mode <- lookupEnv "STORAGE_MODE"
+  portEnv <- lookupEnv "PORT"
+  let port = maybe 10000 id (portEnv >>= readMaybe)
   store <- case mode of
     Just "database" -> do
       connStr <- getEnv "DATABASE_URL"
@@ -93,7 +96,7 @@ main = do
 
   putStrLn "=================================================="
   putStrLn "  Haskell Bitcoin Wallet API  v3.0"
-  putStrLn "  http://localhost:8080"
+  putStrLn $ "  Listening on port " ++ show port
   putStrLn $ "  Storage: " ++ maybe "database" id mode
   putStrLn "=================================================="
-  run 8080 app
+  run port app

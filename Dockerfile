@@ -17,9 +17,9 @@ RUN ls -la /app/client/dist/
 # ============================================================
 # Estágio 2: Build do Backend (Haskell + Cabal)
 # ============================================================
-FROM haskell:9.8.4 AS backend-builder
+FROM haskell:9.12.4-bookworm AS backend-builder
 
-RUN apt-get update --fix-missing && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     libsqlite3-dev \
     pkg-config \
@@ -62,6 +62,6 @@ COPY --from=frontend-builder /app/client/dist ./dist
 # Verifica se o dist chegou na imagem final
 RUN ls -la /app/dist/
 
-EXPOSE 8080
+EXPOSE 10000
 
 CMD ["./servidor"]
