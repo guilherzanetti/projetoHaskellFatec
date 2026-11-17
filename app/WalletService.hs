@@ -18,7 +18,7 @@ import qualified Data.Text as T
 import qualified Data.Map.Strict as Map
 import Data.Maybe (fromMaybe)
 import System.Process (readProcess)
-import Network.HTTP.Simple (parseRequest, httpLBS, getResponseBody, Response)
+import Network.HTTP.Simple (parseRequest, httpLBS, getResponseBody, getResponseStatusCode, Response)
 import Control.Exception (try, SomeException)
 
 generateWallet :: FilePath -> IO (Either String GeneratedWallet)
@@ -132,7 +132,16 @@ runGeneratorScript scriptPath stdin_ = do
 
 httpGet :: String -> IO (Either String LBS.ByteString)
 httpGet url = do
-  result <- try (parseRequest url >>= httpLBS) :: IO (Either SomeException (Response LBS.ByteString))
+  result <- try (parseRequest url >>= httpLBS)
+    :: IO (Either SomeException (Response LBS.ByteString))
+
   case result of
-    Left  err      -> pure . Left $ "Network error: " <> show err
-    Right response -> pure . Right $ getResponseBody response
+    Left err ->
+      pure . Left $ "Network error: " <> show err
+
+    Right response ->
+      let status = getResponseStatusCode response
+      in if status >= 200 && status < 300
+           then pure . Right $ getResponseBody response
+           else pure . Left $ "External API HTTP " <> show status
+

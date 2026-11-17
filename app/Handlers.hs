@@ -215,7 +215,7 @@ balanceHandler store mAuth wid = do
   balResult <- liftIO $ fetchBalance addr
   offChain  <- liftIO $ storeGetInternalBalance store uid wid
   case balResult of
-    Left _ -> pure $ CombinedBalance 0 offChain offChain 0 (satsToBtc offChain) (satsToBtc offChain)
+    Left err -> throwError $ errFor 502 err
     Right br -> do
       let onChain = brConfirmedSats br
           total   = onChain + offChain

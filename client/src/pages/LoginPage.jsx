@@ -1,24 +1,24 @@
-import { useState } from 'react'
-import { useAuth } from '../contexts/AuthContext'
+import { useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function LoginPage({ onSwitch }) {
-  const { login } = useAuth()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [otpCode, setOtpCode] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const { login } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   async function handleSubmit(e) {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
     try {
-      await login(email, password, otpCode || undefined)
+      await login(email, password, otpCode || undefined);
     } catch (err) {
-      setError(err.message)
+      setError(err.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
@@ -26,8 +26,12 @@ export default function LoginPage({ onSwitch }) {
     <div className="auth-page">
       <div className="auth-card glass-panel">
         <div className="auth-card__header">
-          <span className="nav__logo" style={{ fontSize: '2rem' }}>₿</span>
-          <h1 className="text-hero" style={{ fontSize: '2rem' }}>Entrar</h1>
+          <span className="nav__logo" style={{ fontSize: "2rem" }}>
+            ₿
+          </span>
+          <h1 className="text-hero" style={{ fontSize: "2rem" }}>
+            Entrar
+          </h1>
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
@@ -51,21 +55,29 @@ export default function LoginPage({ onSwitch }) {
           <input
             className="input-text"
             type="text"
-            placeholder="Codigo 2FA (opcional)"
+            placeholder="Código 2FA (opcional)"
             value={otpCode}
             onChange={(e) => setOtpCode(e.target.value)}
             maxLength={6}
           />
           {error && <p className="auth-error">{error}</p>}
-          <button type="submit" className="btn-primary" style={{ width: '100%' }} disabled={loading}>
-            {loading ? 'Entrando...' : 'Entrar'}
+          <button
+            type="submit"
+            className="btn-primary"
+            style={{ width: "100%" }}
+            disabled={loading}
+          >
+            {loading ? "Entrando..." : "Entrar"}
           </button>
         </form>
 
         <p className="auth-switch">
-          Nao tem conta? <button className="auth-link" onClick={onSwitch}>Criar conta</button>
+          Não tem conta?{" "}
+          <button className="auth-link" onClick={onSwitch}>
+            Criar conta
+          </button>
         </p>
       </div>
     </div>
-  )
+  );
 }
